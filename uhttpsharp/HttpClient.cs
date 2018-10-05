@@ -44,7 +44,7 @@ namespace uhttpsharp
         private readonly IHttpRequestProvider _requestProvider;
         private readonly EndPoint _remoteEndPoint;
         private DateTime _lastOperationTime;
-        private readonly Stream _stream;
+        private Stream _stream;
 
         public HttpClientHandler(IClient client, Func<IHttpContext, Task> requestHandler, IHttpRequestProvider requestProvider)
         {
@@ -52,8 +52,6 @@ namespace uhttpsharp
             _client = client;
             _requestHandler = requestHandler;
             _requestProvider = requestProvider;
-
-            _stream = new BufferedStream(_client.Stream, 8096);
             
             Logger.InfoFormat("Got Client {0}", _remoteEndPoint);
 
@@ -62,10 +60,22 @@ namespace uhttpsharp
             UpdateLastOperationTime();
         }
 
+        private async Task InitializeStream()
+        {
+            if (Client is ClientSslDecorator)
+            {
+                await ((ClientSslDecorator)Client).AuthenticateAsServer();
+            }
+
+            _stream = new BufferedStream(_client.Stream, 8096);
+        }
+
         private async void Process()
         {
             try
             {
+                await InitializeStream();
+
                 while (_client.Connected)
                 {
                     // TODO : Configuration.
