@@ -64,7 +64,7 @@ namespace uhttpsharp
         {
             if (Client is ClientSslDecorator)
             {
-                await ((ClientSslDecorator)Client).AuthenticateAsServer();
+                await ((ClientSslDecorator)Client).AuthenticateAsServer().ConfigureAwait(false);
             }
 
             _stream = new BufferedStream(_client.Stream, 8096);
